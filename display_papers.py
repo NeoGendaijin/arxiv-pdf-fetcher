@@ -1,6 +1,7 @@
 import json
 import sys
 import os
+import re
 import argparse
 
 # ANSI color codes for terminal output
@@ -21,6 +22,21 @@ def display_papers(json_file, output_file=None):
         # Read the JSON file
         with open(json_file, 'r', encoding='utf-8') as f:
             data = json.load(f)
+        
+        # Try to read download results if available
+        download_results = {}
+        results_file = os.path.join(os.path.dirname(json_file), "download_results.json")
+        if os.path.exists(results_file):
+            try:
+                with open(results_file, 'r', encoding='utf-8') as f:
+                    download_data = json.load(f)
+                    if 'papers' in download_data:
+                        # Create a lookup by paper name and URL
+                        for paper in download_data['papers']:
+                            key = (paper.get('paper_name', ''), paper.get('paper_url', ''))
+                            download_results[key] = paper
+            except Exception as e:
+                print(f"Warning: Could not read download results: {str(e)}")
         
         # Check if the expected structure exists
         if 'papers' not in data:
@@ -54,8 +70,56 @@ def display_papers(json_file, output_file=None):
         output.append("")
         
         for i, paper in enumerate(papers, 1):
-            output.append(f"{i}. {paper['paper_name']}")
-            output.append(f"   URL: {paper['paper_url']}")
+            paper_name = paper['paper_name']
+            paper_url = paper['paper_url']
+            
+            output.append(f"{i}. {paper_name}")
+            output.append(f"   URL: {paper_url}")
+            
+            # Try to extract arXiv URL if possible
+            arxiv_url = None
+            
+            # Check if it's an arXiv URL
+            if "arxiv.org" in paper_url:
+                arxiv_id = None
+                # Extract ID from URL like https://arxiv.org/abs/2310.17042
+                match = re.search(r'arxiv\.org/(?:abs|pdf)/(\d+\.\d+)', paper_url)
+                if match:
+                    arxiv_id = match.group(1)
+                
+                # Extract ID from URL with /arxiv: prefix
+                if not arxiv_id:
+                    match = re.search(r'/arxiv:(\d+\.\d+)', paper_url)
+                    if match:
+                        arxiv_id = match.group(1)
+                
+                if arxiv_id:
+                    arxiv_url = f"https://arxiv.org/abs/{arxiv_id}"
+            
+            # Check if we have download info for this paper
+            download_key = (paper_name, paper_url)
+            download_info = download_results.get(download_key, {})
+            
+            # Get arXiv URL from download info if available
+            if not arxiv_url and 'arxiv_url' in download_info:
+                arxiv_url = download_info['arxiv_url']
+            elif not arxiv_url and 'arxiv_id' in download_info:
+                arxiv_url = f"https://arxiv.org/abs/{download_info['arxiv_id']}"
+            
+            if arxiv_url:
+                output.append(f"   arXiv: {arxiv_url}")
+            else:
+                output.append(f"   arXiv: Not available")
+            
+            # Add download status
+            if download_info:
+                if download_info.get('downloaded', False):
+                    output.append(f"   Downloaded: Yes - {download_info.get('pdf_path', 'Unknown location')}")
+                else:
+                    output.append(f"   Downloaded: No - {download_info.get('error', 'Unknown error')}")
+            else:
+                output.append(f"   Downloaded: Not attempted")
+            
             output.append("")
         
         output.append(f"Total papers: {len(papers)}")
@@ -71,8 +135,56 @@ def display_papers(json_file, output_file=None):
         print(f"{Colors.BOLD}{Colors.HEADER}{'=' * 80}{Colors.ENDC}\n")
         
         for i, paper in enumerate(papers, 1):
-            print(f"{Colors.BOLD}{Colors.GREEN}{i}. {paper['paper_name']}{Colors.ENDC}")
-            print(f"{Colors.BLUE}   URL: {Colors.UNDERLINE}{paper['paper_url']}{Colors.ENDC}")
+            paper_name = paper['paper_name']
+            paper_url = paper['paper_url']
+            
+            print(f"{Colors.BOLD}{Colors.GREEN}{i}. {paper_name}{Colors.ENDC}")
+            print(f"{Colors.BLUE}   URL: {Colors.UNDERLINE}{paper_url}{Colors.ENDC}")
+            
+            # Try to extract arXiv URL if possible
+            arxiv_url = None
+            
+            # Check if it's an arXiv URL
+            if "arxiv.org" in paper_url:
+                arxiv_id = None
+                # Extract ID from URL like https://arxiv.org/abs/2310.17042
+                match = re.search(r'arxiv\.org/(?:abs|pdf)/(\d+\.\d+)', paper_url)
+                if match:
+                    arxiv_id = match.group(1)
+                
+                # Extract ID from URL with /arxiv: prefix
+                if not arxiv_id:
+                    match = re.search(r'/arxiv:(\d+\.\d+)', paper_url)
+                    if match:
+                        arxiv_id = match.group(1)
+                
+                if arxiv_id:
+                    arxiv_url = f"https://arxiv.org/abs/{arxiv_id}"
+            
+            # Check if we have download info for this paper
+            download_key = (paper_name, paper_url)
+            download_info = download_results.get(download_key, {})
+            
+            # Get arXiv URL from download info if available
+            if not arxiv_url and 'arxiv_url' in download_info:
+                arxiv_url = download_info['arxiv_url']
+            elif not arxiv_url and 'arxiv_id' in download_info:
+                arxiv_url = f"https://arxiv.org/abs/{download_info['arxiv_id']}"
+            
+            if arxiv_url:
+                print(f"{Colors.CYAN}   arXiv: {Colors.UNDERLINE}{arxiv_url}{Colors.ENDC}")
+            else:
+                print(f"{Colors.YELLOW}   arXiv: Not available{Colors.ENDC}")
+            
+            # Add download status
+            if download_info:
+                if download_info.get('downloaded', False):
+                    print(f"{Colors.GREEN}   Downloaded: Yes - {download_info.get('pdf_path', 'Unknown location')}{Colors.ENDC}")
+                else:
+                    print(f"{Colors.RED}   Downloaded: No - {download_info.get('error', 'Unknown error')}{Colors.ENDC}")
+            else:
+                print(f"{Colors.YELLOW}   Downloaded: Not attempted{Colors.ENDC}")
+            
             print()
         
         print(f"{Colors.BOLD}Total papers: {len(papers)}{Colors.ENDC}")

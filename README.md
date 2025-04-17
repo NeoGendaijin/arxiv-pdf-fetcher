@@ -2,6 +2,15 @@
 
 This project uses the OpenAI API with web search capabilities to gather information about research papers on any topic, and provides functionality to download the papers from arXiv or other sources.
 
+## Features
+
+- **Universal Search**: Search for research papers on any topic using OpenAI's web search capabilities
+- **Intelligent Paper Matching**: Advanced algorithm to accurately match papers with their arXiv versions
+- **Automatic Downloads**: Fully autonomous workflow from search to download without manual intervention
+- **NeurIPS Paper Support**: Special handling for NeurIPS conference papers with improved matching
+- **Comprehensive Display**: View paper titles, URLs, arXiv links, and download status in one place
+- **All-in-One Script**: Run the entire process with a single command
+
 ## Project Structure
 
 ```
@@ -44,7 +53,7 @@ This project uses the OpenAI API with web search capabilities to gather informat
 
 ### Quick Start: Run All Steps at Once
 
-The easiest way to use this tool is with the `run_all.py` script, which performs all steps (search, display, and download) in sequence:
+The easiest way to use this tool is with the `run_all.py` script, which performs all steps (search, download, and display) in sequence:
 
 ```
 poetry run python run_all.py "your search query"
@@ -53,22 +62,20 @@ poetry run python run_all.py "your search query"
 For example:
 ```
 poetry run python run_all.py "quantum computing"
-poetry run python run_all.py "climate change"
+poetry run python run_all.py "diffusion model neurips"
 ```
 
 The script will:
-1. Search for papers on your topic
-2. Display the results in a readable format
-3. Ask if you want to download the papers
-4. If you choose yes, download the papers to the `data/pdf/` directory
+1. Search for papers on your topic using OpenAI's web search
+2. Automatically download the papers from arXiv or directly from conference websites
+3. Display the results with titles, URLs, arXiv links, and download status
 
 Additional options:
 ```
-poetry run python run_all.py "quantum computing" --download  # Automatically download without asking
 poetry run python run_all.py "quantum computing" --no-download  # Skip downloading
 poetry run python run_all.py "quantum computing" --model gpt-3.5-turbo  # Use a different model
-poetry run python run_all.py "quantum computing" --threshold 0.5  # Lower similarity threshold for downloads
-poetry run python run_all.py "quantum computing" --no-manual  # Disable manual search mode
+poetry run python run_all.py "quantum computing" --threshold 0.6  # Adjust similarity threshold
+poetry run python run_all.py "quantum computing" --manual  # Enable manual search mode
 ```
 
 ### Individual Steps
@@ -84,8 +91,7 @@ poetry run python search_papers.py "your search query"
 For example:
 ```
 poetry run python search_papers.py "quantum computing"
-poetry run python search_papers.py "climate change"
-poetry run python search_papers.py "machine learning"
+poetry run python search_papers.py "diffusion models"
 ```
 
 You can also specify a custom output file and model:
@@ -93,28 +99,7 @@ You can also specify a custom output file and model:
 poetry run python search_papers.py "quantum computing" --output custom_output.json --model gpt-4o
 ```
 
-The script will:
-1. Use the OpenAI API to search for research papers on your topic
-2. Parse the JSON response and save it to `data/json/<query>_papers.json`
-3. Display the formatted JSON in the terminal
-4. Suggest next steps for displaying and downloading the papers
-
-#### 2. Display Papers
-
-Display the search results in a readable format:
-
-```
-poetry run python display_papers.py data/json/<query>_papers.json
-```
-
-For example:
-```
-poetry run python display_papers.py data/json/quantum_computing_papers.json
-```
-
-This will read the JSON file and display the papers in a formatted list with color highlighting in the terminal. The output is also saved to a text file.
-
-#### 3. Download Papers
+#### 2. Download Papers
 
 Download the papers as PDF files:
 
@@ -122,43 +107,59 @@ Download the papers as PDF files:
 poetry run python download_papers.py --json data/json/<query>_papers.json
 ```
 
-This script will:
-1. Read the paper information from the JSON file
-2. Try to download each paper using one of these methods:
-   - Direct download if the URL points to a PDF
-   - Extract arXiv ID from the URL and download from arXiv
-   - Search arXiv by title with fuzzy matching (handles special characters like β₂)
-   - Interactive manual search for papers not found automatically
-3. Save the PDFs to the `data/pdf/` directory
-4. Create a `download_results.json` file with download status information
+The download script uses an advanced paper matching algorithm that:
+- Performs intelligent title matching with multiple search strategies
+- Verifies matches using a sophisticated similarity calculation
+- Filters out incorrect matches using pattern detection
+- Handles papers with prefixes/suffixes (e.g., "DiscDiff: Latent Diffusion Model...")
+- Has special handling for NeurIPS conference papers
 
-#### Advanced Download Options
-
-The download script supports several command-line options:
-
+Advanced download options:
 ```
-poetry run python download_papers.py --help
+poetry run python download_papers.py --json data/json/quantum_computing_papers.json --threshold 0.7  # Stricter matching
+poetry run python download_papers.py --json data/json/quantum_computing_papers.json --manual  # Enable manual search
+poetry run python download_papers.py --retry-failed  # Retry only papers that failed previously
 ```
 
-Key options include:
-- `--json PATH`: Specify a custom JSON file path
-- `--output DIR`: Specify a custom output directory for PDFs
-- `--threshold VALUE`: Set the similarity threshold for fuzzy matching (0.0-1.0)
-- `--no-manual`: Disable interactive manual search
-- `--retry-failed`: Retry only papers that failed to download previously
+#### 3. Display Papers
 
-Example for retrying failed downloads with a lower similarity threshold:
+Display the search results with download status:
+
 ```
-poetry run python download_papers.py --retry-failed --threshold 0.5
+poetry run python display_papers.py data/json/<query>_papers.json
 ```
 
-#### Manual Search Mode
+This will show:
+- Paper titles
+- Original URLs
+- arXiv URLs (when available)
+- Download status (success/failure with details)
 
-For papers that can't be found automatically, the script enters manual search mode (if enabled), allowing you to:
-1. Provide an arXiv ID directly
-2. Enter custom search terms
-3. Select from search results
-4. Skip the paper
+## Technical Details
+
+### Paper Matching Algorithm
+
+The tool uses a sophisticated algorithm to match papers with their arXiv versions:
+
+1. **Multiple Search Strategies**:
+   - Exact title search
+   - First N words search
+   - Most distinctive words search
+   - Special strategies for NeurIPS papers
+
+2. **Advanced Similarity Calculation**:
+   - Basic string similarity (Levenshtein distance)
+   - Title containment check
+   - Important word overlap analysis
+   - Weighted scoring system
+
+3. **Verification Process**:
+   - Blacklist for known problematic patterns
+   - Length ratio check
+   - Important word overlap threshold
+   - Title containment verification
+
+This ensures that papers like "Latent Diffusion Model for DNA Sequence Generation" are correctly matched with "DiscDiff: Latent Diffusion Model for DNA Sequence Generation" while avoiding completely unrelated papers.
 
 ## Output Format
 
@@ -193,6 +194,7 @@ After downloading, the `download_results.json` file will include additional info
       "paper_name": "Example Paper Title 1",
       "paper_url": "https://example.com/paper1",
       "arxiv_id": "2310.12345",
+      "arxiv_url": "http://arxiv.org/abs/2310.12345v1",
       "pdf_path": "data/pdf/Example_Paper_Title_1.pdf",
       "downloaded": true
     },
@@ -200,7 +202,7 @@ After downloading, the `download_results.json` file will include additional info
       "paper_name": "Example Paper Title 2",
       "paper_url": "https://example.com/paper2",
       "downloaded": false,
-      "error": "No results found on arXiv"
+      "error": "No results found on arXiv and direct download failed"
     }
   ]
 }
@@ -209,9 +211,9 @@ After downloading, the `download_results.json` file will include additional info
 ## Files
 
 - `search_papers.py`: Main script that uses the OpenAI API to search for papers on any topic
-- `display_papers.py`: Helper script to display the papers in a readable format
-- `download_papers.py`: Script to download the papers as PDF files
-- `run_all.py`: All-in-one script to search, display, and download papers in one go
+- `display_papers.py`: Helper script to display the papers in a readable format with download status
+- `download_papers.py`: Script to download the papers as PDFs with advanced matching algorithm
+- `run_all.py`: All-in-one script to search, download, and display papers in one go
 - `data/json/<query>_papers.json`: Output file containing the search results
 - `data/json/download_results.json`: File containing download status information
 - `data/pdf/`: Directory containing downloaded PDF papers

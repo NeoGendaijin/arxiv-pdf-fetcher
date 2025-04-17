@@ -181,8 +181,8 @@ Output should be in JSON format with the following structure:
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Search for research papers using OpenAI API')
-    parser.add_argument('query', type=str, nargs='?', default=None,
-                        help='Search query for papers (e.g., "quantum computing", "climate change")')
+    parser.add_argument('query', type=str, nargs='+', default=None,
+                        help='Search query for papers (e.g., quantum computing, climate change)')
     parser.add_argument('--output', '-o', type=str, default=None,
                         help='Output JSON file path (default: data/json/<query>_papers.json)')
     parser.add_argument('--model', '-m', type=str, default="gpt-4o",
@@ -191,12 +191,14 @@ def main():
     args = parser.parse_args()
     
     # If no query provided, prompt the user
-    query = args.query
-    if not query:
+    if not args.query:
         query = input("Enter search query for papers: ")
         if not query.strip():
             print("Error: Search query cannot be empty")
             sys.exit(1)
+    else:
+        # Join the list of query words into a single string
+        query = " ".join(args.query)
     
     # Import time module here to avoid circular import
     global import_time
