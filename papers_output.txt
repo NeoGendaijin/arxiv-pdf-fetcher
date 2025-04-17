@@ -1,0 +1,32 @@
+================================================================================
+                 RECENT ADVANCEMENTS IN ADAM OPTIMIZER RESEARCH                 
+================================================================================
+
+1. ADOPT: Modified Adam Can Converge with Any β₂ with the Optimal Rate
+   URL: https://papers.nips.cc/paper_files/paper/2024/hash/84d286e32bbee8fa3a86ee9c50e00081-Abstract-Conference.html
+
+2. Adam through a Second-Order Lens
+   URL: https://nips.cc/virtual/2023/74410
+
+3. ADOPT: Modified Adam Can Converge with the Optimal Rate with Any Hyperparameters
+   URL: https://iclr.cc/virtual/2024/23393
+
+4. Meta-AdaM: A Meta-Learned Adaptive Optimizer with Momentum for Few-Shot Learning
+   URL: https://papers.nips.cc/paper_files/paper/2023/hash/ce26d21662c979d515164b416d4571fe-Abstract-Conference.html
+
+5. Adam Can Converge Without Any Modification On Update Rules
+   URL: https://papers.neurips.cc/paper_files/paper/2022/hash/b6260ae5566442da053e5ab5d691067a-Abstract-Conference.html
+
+6. The AdEMAMix Optimizer: Better, Faster, Older
+   URL: https://iclr.cc/virtual/2025/poster/28625
+
+7. Continually Adapting Optimizers Improve Meta-Generalization
+   URL: https://nips.cc/virtual/2023/80551
+
+8. Understanding Adam Optimizer via Online Learning of Updates: Adam is FTRL in Disguise
+   URL: https://icml.cc/virtual/2024/poster/33366
+
+9. AGD: an Auto-switchable Optimizer using Stepwise Gradient Difference for Preconditioning Matrix
+   URL: https://nips.cc/virtual/2023/poster/72552
+
+Total papers: 9
